@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Approval Predictor</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-icon">L</span>
+            <span>LoanWise</span>
+        </div>
+        <span class="model-tag">Decision Tree Model</span>
+    </header>
+
+    <main class="page">
+        <section class="intro">
+            <p class="eyebrow">LOAN ELIGIBILITY ANALYSIS</p>
+            <h1>Loan Approval Prediction</h1>
+            <p class="subtitle">
+                Enter the applicant's financial details to get a
+                prediction from your trained machine learning model.
+            </p>
+        </section>
+
+        <section class="form-card">
+            <div class="section-heading">
+                <h2>Applicant Information</h2>
+                <p>Complete all fields to generate a prediction.</p>
+            </div>
+
+            <form method="POST">
+                <div class="form-grid">
+
+                    <div class="field">
+                        <label for="no_of_dependents">
+                            Number of Dependents
+                        </label>
+                        <input id="no_of_dependents"
+                               type="number"
+                               name="no_of_dependents"
+                               min="0"
+                               step="1"
+                               value="{{ form_data.get('no_of_dependents', '') }}"
+                               placeholder="e.g. 2"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="education">Education</label>
+                        <select id="education" name="education" required>
+                            <option value="">Select education</option>
+                            <option value="Graduate"
+                                {% if form_data.get('education') == 'Graduate' %}selected{% endif %}>
+                                Graduate
+                            </option>
+                            <option value="Not Graduate"
+                                {% if form_data.get('education') == 'Not Graduate' %}selected{% endif %}>
+                                Not Graduate
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="self_employed">Self Employed</label>
+                        <select id="self_employed"
+                                name="self_employed" required>
+                            <option value="">Select an option</option>
+                            <option value="Yes"
+                                {% if form_data.get('self_employed') == 'Yes' %}selected{% endif %}>
+                                Yes
+                            </option>
+                            <option value="No"
+                                {% if form_data.get('self_employed') == 'No' %}selected{% endif %}>
+                                No
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="income_annum">Annual Income</label>
+                        <input id="income_annum"
+                               type="number"
+                               name="income_annum"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('income_annum', '') }}"
+                               placeholder="e.g. 800000"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="loan_amount">Loan Amount</label>
+                        <input id="loan_amount"
+                               type="number"
+                               name="loan_amount"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('loan_amount', '') }}"
+                               placeholder="e.g. 2500000"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="loan_term">Loan Term</label>
+                        <input id="loan_term"
+                               type="number"
+                               name="loan_term"
+                               min="1"
+                               step="1"
+                               value="{{ form_data.get('loan_term', '') }}"
+                               placeholder="Enter dataset's loan term"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="cibil_score">CIBIL Score</label>
+                        <input id="cibil_score"
+                               type="number"
+                               name="cibil_score"
+                               min="0"
+                               max="900"
+                               step="any"
+                               value="{{ form_data.get('cibil_score', '') }}"
+                               placeholder="e.g. 750"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="residential_assets_value">
+                            Residential Assets Value
+                        </label>
+                        <input id="residential_assets_value"
+                               type="number"
+                               name="residential_assets_value"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('residential_assets_value', '') }}"
+                               placeholder="Enter value"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="commercial_assets_value">
+                            Commercial Assets Value
+                        </label>
+                        <input id="commercial_assets_value"
+                               type="number"
+                               name="commercial_assets_value"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('commercial_assets_value', '') }}"
+                               placeholder="Enter value"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="luxury_assets_value">
+                            Luxury Assets Value
+                        </label>
+                        <input id="luxury_assets_value"
+                               type="number"
+                               name="luxury_assets_value"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('luxury_assets_value', '') }}"
+                               placeholder="Enter value"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="bank_asset_value">
+                            Bank Asset Value
+                        </label>
+                        <input id="bank_asset_value"
+                               type="number"
+                               name="bank_asset_value"
+                               min="0"
+                               step="any"
+                               value="{{ form_data.get('bank_asset_value', '') }}"
+                               placeholder="Enter value"
+                               required>
+                    </div>
+
+                </div>
+
+                {% if error %}
+                    <div class="error-message" role="alert">
+                        {{ error }}
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="predict-button">
+                    Predict Loan Status
+                    <span aria-hidden="true">→</span>
+                </button>
+            </form>
+
+            {% if prediction %}
+                <section class="result-card {{ prediction.status }}"
+                         aria-live="polite">
+                    <div class="result-icon">
+                        {% if prediction.status == 'approved' %}
+                            ✓
+                        {% else %}
+                            !
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <p class="result-label">MODEL PREDICTION</p>
+                        <h2>{{ prediction.label }}</h2>
+                        <p>{{ prediction.description }}</p>
+                    </div>
+                </section>
+            {% endif %}
+
+            <p class="disclaimer">
+                This prediction is based on historical training data.
+                It is not an actual lender's decision or a guarantee
+                of loan approval.
+            </p>
+        </section>
+
+        <section class="metrics-section">
+            <div class="section-heading">
+                <p class="eyebrow">MODEL PERFORMANCE</p>
+                <h2>Decision Tree Evaluation</h2>
+                <p>Previously measured results on your held-out test set.</p>
+            </div>
+
+            <div class="metrics-grid">
+                <article class="metric-card">
+                    <span>Accuracy</span>
+                    <strong>{{ "%.2f"|format(metrics.accuracy) }}%</strong>
+                    <small>Overall correct predictions</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Precision</span>
+                    <strong>{{ "%.2f"|format(metrics.precision) }}%</strong>
+                    <small>For encoded class 1</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>Recall</span>
+                    <strong>{{ "%.2f"|format(metrics.recall) }}%</strong>
+                    <small>For encoded class 1</small>
+                </article>
+
+                <article class="metric-card">
+                    <span>F1-score</span>
+                    <strong>{{ "%.2f"|format(metrics.f1_score) }}%</strong>
+                    <small>For encoded class 1</small>
+                </article>
+            </div>
+        </section>
+
+        <footer>
+            LoanWise · Machine Learning Project
+        </footer>
+    </main>
+</body>
+</html>
