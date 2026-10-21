@@ -6,32 +6,31 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-# Load the saved Decision Tree model
+# Load the tuned 8-feature Decision Tree
 MODEL_PATH = (
     Path(__file__).resolve().parent.parent
-    / "decision_tree_model.pkl"
+    / "decision_tree_tuned_8features.pkl"
 )
 
 with open(MODEL_PATH, "rb") as file:
     model = pickle.load(file)
 
-# These mappings must match your notebook's encoding
+# Must match the exact feature order used during training
+FEATURES = [
+    "education",
+    "income_annum",
+    "loan_amount",
+    "loan_term",
+    "cibil_score",
+    "residential_assets_value",
+    "commercial_assets_value",
+    "luxury_assets_value"
+]
+
+# Match the encoding used during training
 education_mapping = {
     "Graduate": 0,
     "Not Graduate": 1
-}
-
-self_employed_mapping = {
-    "No": 0,
-    "Yes": 1
-}
-
-# Test-set metrics from your notebook
-model_metrics = {
-    "accuracy": 97.66,
-    "precision": 94.96,
-    "recall": 99.07,
-    "f1_score": 96.97
 }
 
 
@@ -39,34 +38,17 @@ model_metrics = {
 def home():
     prediction = None
     error = None
-    form_data = {}
 
     if request.method == "POST":
-        form_data = request.form.to_dict()
-
         try:
+            education = request.form["education"]
+
             input_data = {
-                "no_of_dependents": int(
-                    request.form["no_of_dependents"]
-                ),
-                "education": education_mapping[
-                    request.form["education"]
-                ],
-                "self_employed": self_employed_mapping[
-                    request.form["self_employed"]
-                ],
-                "income_annum": float(
-                    request.form["income_annum"]
-                ),
-                "loan_amount": float(
-                    request.form["loan_amount"]
-                ),
-                "loan_term": int(
-                    request.form["loan_term"]
-                ),
-                "cibil_score": float(
-                    request.form["cibil_score"]
-                ),
+                "education": education_mapping[education],
+                "income_annum": float(request.form["income_annum"]),
+                "loan_amount": float(request.form["loan_amount"]),
+                "loan_term": float(request.form["loan_term"]),
+                "cibil_score": float(request.form["cibil_score"]),
                 "residential_assets_value": float(
                     request.form["residential_assets_value"]
                 ),
@@ -75,87 +57,32 @@ def home():
                 ),
                 "luxury_assets_value": float(
                     request.form["luxury_assets_value"]
-                ),
-                "bank_asset_value": float(
-                    request.form["bank_asset_value"]
                 )
             }
 
-            if any(
-                value < 0
-                for key, value in input_data.items()
-                if key not in ("education", "self_employed")
-            ):
-                raise ValueError(
-                    "Numeric values cannot be negative."
-                )
-
-            if input_data["loan_term"] == 0:
-                raise ValueError(
-                    "Loan term must be greater than zero."
-                )
-
-            if input_data["cibil_score"] > 900:
-                raise ValueError(
-                    "CIBIL score must not exceed 900."
-                )
-
-            # Keep the original feature order
-            feature_columns = [
-                "no_of_dependents",
-                "education",
-                "self_employed",
-                "income_annum",
-                "loan_amount",
-                "loan_term",
-                "cibil_score",
-                "residential_assets_value",
-                "commercial_assets_value",
-                "luxury_assets_value",
-                "bank_asset_value"
-            ]
-
+            # Preserve the exact training feature order
             new_data = pd.DataFrame(
                 [input_data],
-                columns=feature_columns
+                columns=FEATURES
             )
 
+            # Predict using the tuned model
             result = int(model.predict(new_data)[0])
 
             if result == 0:
-                prediction = {
-                    "label": "Loan Approved",
-                    "status": "approved",
-                    "description": (
-                        "The model predicts that this "
-                        "application belongs to the "
-                        "approved class."
-                    )
-                }
+                prediction = "Loan Approved"
             elif result == 1:
-                prediction = {
-                    "label": "Loan Rejected",
-                    "status": "rejected",
-                    "description": (
-                        "The model predicts that this "
-                        "application belongs to the "
-                        "rejected class."
-                    )
-                }
+                prediction = "Loan Rejected"
             else:
-                raise ValueError(
-                    "Unexpected prediction label."
-                )
+                error = "Unexpected prediction returned by the model."
 
-        except (ValueError, KeyError) as exc:
-            error = str(exc) or "Please check your input values."
+        except (ValueError, KeyError):
+            error = "Please enter valid values in all fields."
 
     return render_template(
         "index.html",
         prediction=prediction,
-        error=error,
-        form_data=form_data,
-        metrics=model_metrics
+        error=error
     )
 
 
